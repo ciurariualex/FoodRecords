@@ -5,13 +5,13 @@ using Core.Services;
 using Core.Utils.Automapper;
 using Core.Utils.Interfaces;
 using Core.Utils.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SmartBOS.Core.Services;
 using Swashbuckle.AspNetCore.Swagger;
 using System;
@@ -46,7 +46,6 @@ namespace Web
             services
                 .AddSession()
                 .AddSwaggerServices()
-                .AddAuthServices(Configuration)
                 .AddCors(options =>
                 {
                     options.AddPolicy(
@@ -54,10 +53,9 @@ namespace Web
                         builder => builder
                             .AllowAnyOrigin()
                             .AllowAnyMethod()
-                            .AllowAnyHeader()
-                            .AllowCredentials());
+                            .AllowAnyHeader());
                 })
-                .AddMvc();
+                .AddMvc(opt => opt.EnableEndpointRouting = false);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -103,55 +101,22 @@ namespace Web
             return services;
         }
 
-        public static IServiceCollection AddAuthServices(this IServiceCollection services, IConfiguration configuration)
-        {
-            var key = Encoding.ASCII.GetBytes(configuration["Auth:Secret"]);
-
-            services
-                .AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddJwtBearer(options =>
-                {
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnTokenValidated = context => Task.CompletedTask,
-                        OnMessageReceived = context => Task.CompletedTask,
-                        OnAuthenticationFailed = context => Task.CompletedTask
-                    };
-                    options.RequireHttpsMetadata = false;
-                    options.SaveToken = true;
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ValidateIssuer = false,
-                        ValidateAudience = false
-                    };
-                });
-
-            return services;
-        }
-
         public static IServiceCollection AddSwaggerServices(this IServiceCollection services)
         {
             services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new Info { Title = "ShareHope", Version = "v1" });
-                var security = new Dictionary<string, IEnumerable<string>>
-                {
-                        { "Bearer", Enumerable.Empty<string>() }
-                };
-
-                options.AddSecurityDefinition("Bearer", new ApiKeyScheme
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "ShareHope", Version = "v1" });
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header using the bearer scheme",
                     Name = "Authorization",
-                    In = "header",
-                    Type = "apiKey"
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey
                 });
+
+                var security = new OpenApiSecurityRequirement();
+                security.Add(new OpenApiSecurityScheme { Name = "Bearer" }, new List<string>());
+
                 options.AddSecurityRequirement(security);
             });
 
