@@ -74,6 +74,13 @@ namespace SmartBOS.Core.Services
             return mapper.Map<TDto>(food);
         }
 
+        public async Task CreateAsync(FoodManage dto)
+        {
+            var food = mapper.Map<Food>(dto);
+
+            await CreateAsync(food);
+        }
+
         public async Task UpdateAsync(FoodEdit dto)
         {
             var food = await GetByIdAsync(dto.Id);

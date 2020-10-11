@@ -43,6 +43,27 @@ namespace Web.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("api/foods")]
+        public async Task<IActionResult> UpdateAsync([FromBody] FoodManage dto)
+        {
+            try
+            {
+                await foodService.CreateAsync(dto);
+
+                return Ok();
+            }
+            catch (EntityNotFoundException<Food>)
+            {
+                return NoContent();
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+        }
+
+
         [HttpGet]
         [Route("api/foods/{id:guid}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)

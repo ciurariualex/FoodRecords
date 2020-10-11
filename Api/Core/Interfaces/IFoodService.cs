@@ -17,10 +17,8 @@ namespace Core.Interfaces
 
         Task<IEnumerable<TDto>> GetByIdsAsync<TDto>(IEnumerable<Guid> ids)
              where TDto : class, IFoodViewable;
-
-        Task<TDto> CreateAsync<TDto>(FoodManage dto)
-            where TDto : class, IFoodViewable;
-
+        Task CreateAsync(FoodManage dto);
+        
         Task UpdateAsync(FoodEdit dto);
 
         Task DeleteAsync(Guid id);
